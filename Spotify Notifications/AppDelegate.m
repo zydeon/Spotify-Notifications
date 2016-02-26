@@ -71,10 +71,10 @@ NSString *previousTrack;
     }
 
     else {
-
         UserNotificationContentImagePropertyAvailable = NO;
 
     }
+
 
     track = [[SNXTrack alloc] init];
 
@@ -121,6 +121,21 @@ NSString *previousTrack;
 
 }
 
+- (void)printAllDeliveredNotifs{
+    NSArray<NSUserNotification *> *notifs =
+                    [NSUserNotificationCenter defaultUserNotificationCenter].deliveredNotifications;
+    for (int i=0; i<[notifs count]; i++) {
+        NSLog(@"%@", notifs[i]);
+    }
+}
+
+- (void)deliverNotification:(NSUserNotification *)notification {
+    if ([self getProperty:@"onlycurrentsong"] == 0) {
+        [[NSUserNotificationCenter defaultUserNotificationCenter] removeAllDeliveredNotifications];
+    }
+    [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:notification];
+}
+
 - (void)setupGlobalShortcutForNotifications {
 
     NSString *const kPreferenceGlobalShortcut = @"ShowCurrentTrack";
@@ -139,16 +154,13 @@ NSString *previousTrack;
                 notification.soundName = NSUserNotificationDefaultSoundName;
 
             }
-
-            [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:notification];
             
-            if ([self getProperty:@"onlycurrentsong"] == 0) {
-                [[NSUserNotificationCenter defaultUserNotificationCenter] removeAllDeliveredNotifications];
-            }
+            [self deliverNotification:notification];
+            
         }
 
         else {
-
+            
             notification.title = track.title;
             notification.subtitle = track.album;
             notification.informativeText = track.artist;
@@ -162,23 +174,13 @@ NSString *previousTrack;
             }
 
             if ([self getProperty:@"notificationSound"] == 0) {
-
                 notification.soundName = NSUserNotificationDefaultSoundName;
-
             }
-
-            [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:notification];
-            track.albumArt = nil;
             
-            if ([self getProperty:@"onlycurrentsong"] == 0) {
-                NSArray *notifs = [NSUserNotificationCenter defaultUserNotificationCenter].deliveredNotifications;
-                for (int i=1; i<[notifs count]; i++) {
-                    [[NSUserNotificationCenter defaultUserNotificationCenter] removeDeliveredNotification:notifs[i]];
-                }
-            }
-
         }
-
+        
+        [self deliverNotification:notification];
+        track.albumArt = nil;
     }];
 
 }
@@ -255,6 +257,7 @@ NSString *previousTrack;
 
 }
 
+
 - (void)eventOccured:(NSNotification *)notification {
 
     NSDictionary *information = [notification userInfo];
@@ -303,19 +306,14 @@ NSString *previousTrack;
                 notification.soundName = NSUserNotificationDefaultSoundName;
 
             }
-
-            [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:notification];
             
-            if ([self getProperty:@"onlycurrentsong"] == 0) {
-                NSArray *notifs = [NSUserNotificationCenter defaultUserNotificationCenter].deliveredNotifications;
-                for (int i=1; i<[notifs count]; i++) {
-                    [[NSUserNotificationCenter defaultUserNotificationCenter] removeDeliveredNotification:notifs[i]];
-                }
-            }
-
+            [self deliverNotification:notification];
+            
         }
     } else if ([self getProperty:@"onlycurrentsong"] == 0 && [self getProperty:@"playpausenotifs"] == 0 && [playerState isEqualToString:@"Paused"]) {
+
         [[NSUserNotificationCenter defaultUserNotificationCenter] removeAllDeliveredNotifications];
+        
     }
 
 }
